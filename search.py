@@ -27,6 +27,14 @@ from mrmime.shadowbans import is_rareless_scan
 
 wh_cache = []
 
+def calc_pokemon_level(cp_multiplier):
+    if cp_multiplier < 0.734:
+        level = 58.35178527 * cp_multiplier * cp_multiplier - 2.838007664 * cp_multiplier + 0.8539209906
+    else:
+        level = 171.0112688 * cp_multiplier - 95.20425243
+    level = (round(level) * 2) / 2.0
+    return int(level)
+
 def add_item_to_wh_cache(item):
     wh_cache.append(item)
 
@@ -61,7 +69,8 @@ def create_webhook_item(model, data):
             'height': data.get('height', None),
             'player_level': 1,
             'verified': SpawnPoint.find_spawn(data['spawnpoint_id'], data['latitude'], data['longitude']).tth_secs != None,
-            'weather': data.get('weather', None)
+            'weather': data.get('weather', None),
+            'pokemon_level': calc_pokemon_level(data.get('cp_multiplier', None))
         }
     elif model == Raid:
         return {
