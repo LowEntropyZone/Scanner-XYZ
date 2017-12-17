@@ -392,7 +392,7 @@ def create_api(args, details, loc):
     except Exception as e:
         log.error(repr(e))
 
-DITTO_IDS = [16, 19, 41, 129, 161, 163, 193]
+DITTO_IDS = [16, 19, 41, 161, 163, 193]
 
 def search_worker(args, scheduler, enc_list):
     #scheduler = Scheduler(args)
