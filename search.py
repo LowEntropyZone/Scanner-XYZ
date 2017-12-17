@@ -324,7 +324,7 @@ class SpawnpointScheduler(BaseScheduler):
             dist = geopy.distance.vincenty((status['latitude'], status['longitude']), (s['latitude'], s['longitude'])).meters
             score = score / (dist + 10.)
             if s['tth_known']:
-                time_until_tth = (status['tth_secs']+3600)-cur_secs()
+                time_until_tth = (s['tth_secs']+3600)-cur_secs()
                 if time_until_tth > 1800:
                     time_until_tth -= 1800
                 score += time_until_tth
