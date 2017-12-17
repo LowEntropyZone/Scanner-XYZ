@@ -38,6 +38,7 @@ def scan():
     #parser.add_argument('-dbp', '--db-pass')
     #parser.add_argument('-dbh', '--db-host', default='localhost')
     #parser.add_argument('-dbpr', '--db-port', default=3306)
+    parser.add_argument('-wh', '--webhook', action='store_true')
     parser.add_argument('-whf', '--webhook-file', default='webhooks.txt')
     args = parser.parse_args()
     #init_database(args)
@@ -46,7 +47,10 @@ def scan():
     proxies = read_file_content(args.proxy_file)
     login_proxies = read_file_content(args.login_proxy_file)
 
-    webhooks = read_file_content(args.webhook_file)
+    if args.webhook:
+        webhooks = read_file_content(args.webhook_file)
+    else:
+        webhooks = []
 
     accounts = read_file_content(args.accounts_file)
 
