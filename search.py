@@ -441,9 +441,6 @@ def search_worker(args, scheduler, enc_list):
         return
 
     while True:
-        # Transfer.
-        k = api.pokemon.keys()
-        api.req_release_pokemon(pokemon_ids=k)
         #log.info('Pulling location')
         loc = scheduler.next_item(details)
         #log.info('Pulled location')
