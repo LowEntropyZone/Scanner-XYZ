@@ -1,12 +1,13 @@
-import configargparse
+import logging
 from itertools import cycle
 from threading import Thread
-import logging
+
+import configargparse
+
 logging.basicConfig(level=logging.INFO,
     format='%(asctime)s [%(threadName)16s][%(module)14s][%(levelname)8s] %(message)s')
 logging.getLogger('pgoapi').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
-from time import sleep
 from search import *
 from mrmime import init_mr_mime
 
@@ -24,6 +25,7 @@ def scan():
     parser.add_argument('-lt', '--login-timeout', default=15)
     parser.add_argument('-kph', '--kph', default=35)
     parser.add_argument('-bh', '--beehiving', action='store_true')
+    parser.add_argument('-bhlf', '--beehive-locations-file', default=None)
     parser.add_argument('-lf', '--locations-file', default='coords.txt')
     parser.add_argument('-dd', '--ditto-detection', action='store_true')
     parser.add_argument('-spin', '--spin-pokestops', action='store_true')
@@ -52,22 +54,30 @@ def scan():
     else:
         webhooks = []
 
+    if args.beehiving:
+        bh_loc_cycle = cycle(read_file_content(args.beehive_locations_file))
+
     accounts = read_file_content(args.accounts_file)
 
     populate_accounts_queue(accounts, cycle(proxies), cycle(login_proxies))
 
-    if args.spawn_scan:
-        scheduler = SpawnpointScheduler(args)
-        scheduler.schedule()
-    else:
-        scheduler = Scheduler(args)
-        scheduler.schedule()
+    if not args.beehiving:
+        loc = [float(i.strip()) for i in args.scan_location.split(',')]
+        if args.spawn_scan:
+            log.info('Using Spawn scheduler.')
+            scheduler = SpawnpointScheduler(args, loc)
+            scheduler.schedule()
+        else:
+            log.info('Using Classic scheduler.')
+            scheduler = Scheduler(args, loc)
+            scheduler.schedule()
 
     t = Thread(target=db_queue_inserter,name='db-inserter', args=(webhooks, ))
     t.start()
 
-    ss = Thread(target=spawn_stats,name='spawn-stats',args=(scheduler, ))
-    ss.start()
+    if not args.beehiving:
+        ss = Thread(target=spawn_stats, name='spawn-stats', args=())
+        ss.start()
 
     if args.encounter and args.pgscout_url != None:
         try:
@@ -79,6 +89,14 @@ def scan():
 
     i = 0
     while i < len(accounts):
+        if args.beehiving:
+            loc = next(bh_loc_cycle, [float(i.strip()) for i in args.scan_location.split(',')])
+            if args.spawn_scan:
+                scheduler = SpawnpointScheduler(args, loc)
+                scheduler.schedule()
+            else:
+                scheduler = Scheduler(args, loc)
+                scheduler.schedule()
         t = Thread(target=search_worker, name='search-worker-{}'.format(i), args=(args, scheduler, list_enc, ))
         #t.daemon = True
         t.start()
