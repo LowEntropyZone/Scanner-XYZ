@@ -1,0 +1,8 @@
+git+https://github.com/SkOODaT/Pgoapi@58ef5dceaa24ee03e22bd023c6e2b595cb3c22a3#egg=pgoapi
+git+https://github.com/sLoPPydrive/MrMime.git#egg=MrMime
+requests
+configargparse
+geopy
+peewee==2.8.1
+psutil
+PyMySQL
