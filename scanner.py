@@ -76,7 +76,7 @@ def scan():
     t.start()
 
     if not args.beehiving:
-        ss = Thread(target=spawn_stats, name='spawn-stats', args=())
+        ss = Thread(target=spawn_stats, name='spawn-stats', args=(scheduler, ))
         ss.start()
 
     if args.encounter and args.pgscout_url != None:
