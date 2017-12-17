@@ -469,17 +469,22 @@ def search_worker(args, scheduler, enc_list):
         details['latitude'] = loc[0]
         details['longitude'] = loc[1]
         gmo = api.req_get_map_objects()['GET_MAP_OBJECTS']
-        weather_info = gmo.client_weather[0]
 
-        # NONE (0)
-        # CLEAR (1)
-        # RAINY (2)
-        # PARTLY_CLOUDY (3)
-        # OVERCAST (4)
-        # WINDY (5)
-        # SNOW (6)
-        # FOG (7)
-        condition = weather_info.gameplay_weather.gameplay_condition
+        try:
+            weather_info = gmo.client_weather[0]
+
+            # NONE (0)
+            # CLEAR (1)
+            # RAINY (2)
+            # PARTLY_CLOUDY (3)
+            # OVERCAST (4)
+            # WINDY (5)
+            # SNOW (6)
+            # FOG (7)
+            condition = weather_info.gameplay_weather.gameplay_condition
+        except Exception:
+            condition = 0
+
         cells = gmo.map_cells
         rareless = is_rareless_scan(gmo)
         if rareless:
