@@ -1,13 +1,13 @@
-from transform import *
-import geopy
-import requests
-import json
-import geopy.distance
-from random import choice
-from queue import Queue
-from time import sleep
-#from threading import Lock as ThreadLock
+# from threading import Lock as ThreadLock
 import logging
+from queue import Queue
+from random import choice
+from time import sleep
+
+import geopy.distance
+
+from transform import *
+
 log = logging.getLogger(__name__)
 
 from utils import *
@@ -115,8 +115,9 @@ def db_queue_inserter(webhooks):
             log.error(repr(e))
 
 class BaseScheduler(object):
-    def __init__(self, args):
+    def __init__(self, args, location):
         self.args = args
+        self.scan_location = location
 
     def generate_locations(self):
         pass
@@ -131,13 +132,12 @@ class BaseScheduler(object):
         pass
 
 class Scheduler(BaseScheduler):
-    def __init__(self, args):
-        super(Scheduler, self).__init__(args)
+    def __init__(self, args, location):
+        super(Scheduler, self).__init__(args, location)
         self.args = args
         self.queue = []
 
         self.step_distance = 0.07
-        self.scan_location = [float(i) for i in args.scan_location.split(',')]
         self.step_limit = int(args.step_limit)
 
         self.locations = []
@@ -278,12 +278,11 @@ class Scheduler(BaseScheduler):
         pass
 
 class SpawnpointScheduler(BaseScheduler):
-    def __init__(self, args):
-        super(SpawnpointScheduler, self).__init__(args)
+    def __init__(self, args, location):
+        super(SpawnpointScheduler, self).__init__(args, location)
         self.args = args
         self.queue = []
 
-        self.scan_location = [float(i) for i in args.scan_location.split(',')]
         self.step_limit = int(args.step_limit)
 
     def schedule(self):
@@ -393,7 +392,7 @@ def create_api(args, details, loc):
     except Exception as e:
         log.error(repr(e))
 
-DITTO_IDS = [16, 19, 41, 161, 163, 193]
+DITTO_IDS = [16, 19, 41, 129, 161, 163, 193]
 
 def search_worker(args, scheduler, enc_list):
     #scheduler = Scheduler(args)
@@ -436,6 +435,9 @@ def search_worker(args, scheduler, enc_list):
         return
 
     while True:
+        # Transfer.
+        k = api.pokemon.keys()
+        api.req_release_pokemon(pokemon_ids=k)
         #log.info('Pulling location')
         loc = scheduler.next_item(details)
         #log.info('Pulled location')
@@ -597,13 +599,6 @@ def search_worker(args, scheduler, enc_list):
                                         log.error(repr(e))
 
                                     break
-
-                                # Transfer.
-                                k = api.pokemon.keys()
-                                api.req_release_pokemon(pokemon_ids=k)
-
-                                if k > 1:
-                                    api.log_info('Transferred {} Pokemon.'.format(len(k)))
 
                             elif catch.status == 3:
                                 try:
