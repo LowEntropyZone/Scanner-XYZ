@@ -63,9 +63,9 @@ def create_webhook_item(model, data):
             "form": data.get('form'),
             "move_1": data.get('move_1'),
             "move_2": data.get('move_2'),
-            "individual_attack": data.get('individual_attack'),
-            "individual_defense": data.get('individual_defense'),
-            "individual_stamina": data.get('individual_stamina'),
+            "individual_attack": data.get('iv_attack'),
+            "individual_defense": data.get('iv_defense'),
+            "individual_stamina": data.get('iv_stamina')
         }
     elif model == Raid:
         return {
