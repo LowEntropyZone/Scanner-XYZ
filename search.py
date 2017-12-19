@@ -1,6 +1,6 @@
 # from threading import Lock as ThreadLock
-import logging
 import calendar
+import logging
 from queue import Queue
 from random import choice
 from time import sleep
@@ -28,6 +28,14 @@ from mrmime.shadowbans import is_rareless_scan
 
 wh_cache = []
 
+def calc_pokemon_level(cp_multiplier):
+    if cp_multiplier < 0.734:
+        level = 58.35178527 * cp_multiplier * cp_multiplier - 2.838007664 * cp_multiplier + 0.8539209906
+    else:
+        level = 171.0112688 * cp_multiplier - 95.20425243
+    level = (round(level) * 2) / 2.0
+    return int(level)
+
 def add_item_to_wh_cache(item):
     wh_cache.append(item)
 
@@ -39,7 +47,7 @@ def create_webhook_item(model, data):
     if model == Pokemon:
         return {
             "pokemon_id": data['pokemon_id'],
-            "encounter_id": data['encounter_id'],
+            "encounter_id": b64_e(data['encounter_id']),
             "latitude": data['latitude'],
             "longitude": data['longitude'],
             "last_modified_time": now_ms(),
@@ -308,6 +316,12 @@ class SpawnpointScheduler(BaseScheduler):
             score = 1e12 if not s['tth_known'] else 1
             dist = geopy.distance.vincenty((status['latitude'], status['longitude']), (s['latitude'], s['longitude'])).meters
             score = score / (dist + 10.)
+            if s['tth_known']:
+                time_until_tth = (s['tth_secs']+3600)-cur_secs()
+                if time_until_tth > 1800:
+                    time_until_tth -= 1800
+                score += time_until_tth
+
             log.debug('Score: {}'.format(str(score)))
             if score > best.get('score', 0.):
                 #log.debug('New best! {} with a score of {}'.format(p.format_decimal(), str(score)))
@@ -386,7 +400,7 @@ def create_api(args, details, loc):
     except Exception as e:
         log.error(repr(e))
 
-DITTO_IDS = [16, 19, 41, 129, 161, 163, 193]
+DITTO_IDS = [16, 19, 41, 161, 163, 193]
 
 def search_worker(args, scheduler, enc_list):
     #scheduler = Scheduler(args)
@@ -429,9 +443,6 @@ def search_worker(args, scheduler, enc_list):
         return
 
     while True:
-        # Transfer.
-        k = api.pokemon.keys()
-        api.req_release_pokemon(pokemon_ids=k)
         #log.info('Pulling location')
         loc = scheduler.next_item(details)
         #log.info('Pulled location')
@@ -451,17 +462,22 @@ def search_worker(args, scheduler, enc_list):
         details['latitude'] = loc[0]
         details['longitude'] = loc[1]
         gmo = api.req_get_map_objects()['GET_MAP_OBJECTS']
-        weather_info = gmo.client_weather[0]
 
-        # NONE (0)
-        # CLEAR (1)
-        # RAINY (2)
-        # PARTLY_CLOUDY (3)
-        # OVERCAST (4)
-        # WINDY (5)
-        # SNOW (6)
-        # FOG (7)
-        condition = weather_info.gameplay_weather.gameplay_condition
+        try:
+            weather_info = gmo.client_weather[0]
+
+            # NONE (0)
+            # CLEAR (1)
+            # RAINY (2)
+            # PARTLY_CLOUDY (3)
+            # OVERCAST (4)
+            # WINDY (5)
+            # SNOW (6)
+            # FOG (7)
+            condition = weather_info.gameplay_weather.gameplay_condition
+        except Exception:
+            condition = 0
+
         cells = gmo.map_cells
         rareless = is_rareless_scan(gmo)
         if rareless:
