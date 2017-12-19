@@ -108,8 +108,6 @@ def db_queue_inserter(webhooks):
 
             whdata = create_webhook_item(model, data)
             type = get_wh_type(model)
-            if type == 'raid' and whdata['pokemon_id'] == None:
-                type = 'egg'
             for wh in webhooks:
                 requests.post(wh, data=json.dumps({
                     'type': type,
