@@ -42,6 +42,8 @@ def add_item_to_wh_cache(item):
 def get_wh_type(model):
     if model == Pokemon:
         return 'pokemon'
+    if model == Raid:
+        return 'raid'
 
 def create_webhook_item(model, data):
     if model == Pokemon:
